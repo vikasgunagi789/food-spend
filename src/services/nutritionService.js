@@ -1,5 +1,5 @@
 
-const FOOD_AI_API = "http://127.0.0.1:8000/api";
+const FOOD_AI_API = "https://foodspend-ai-backend.vercel.app/api";
 
 export async function askNutritionQuestion(question) {
   const response = await fetch(`${FOOD_AI_API}/nutrition`, {
