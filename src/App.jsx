@@ -15,6 +15,7 @@ import Statistics from "./pages/Statistics";
 import Settings from "./pages/Settings";
 import GeneralExpenses from "./pages/GeneralExpenses";
 import Auth from "./pages/Auth";
+import SmartChat from "./pages/SmartChat";
 
 import BottomNav from "./components/BottomNav";
 import OfflineIndicator from "./components/OfflineIndicator";
@@ -221,6 +222,11 @@ function AuthenticatedApp({ user }) {
               <Settings user={user} />
             }
           />
+          <Route
+  path="/smart-chat"
+  element={<SmartChat />}
+/>
+
 
           {/* GENERAL EXPENSES */}
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 
 import { useNavigate } from "react-router-dom";
 
+
 import {
   Plus,
   Coffee,
@@ -9,7 +10,9 @@ import {
   Moon,
   Cookie,
   Settings,
+  MessageCircle,
 } from "lucide-react";
+
 
 import {
   isGeneralExpensesUnlocked,
@@ -475,43 +478,42 @@ function Home() {
           HEADER
           ================================================= */}
 
-      <header className="top-header">
+      
+<header className="top-header">
+  <div>
+    <p className="greeting">
+      Good Evening
+    </p>
 
-        <div>
+    <h1>
+      VGlytics
+    </h1>
+  </div>
 
-          <p className="greeting">
-            Good Evening
-          </p>
+  <div className="top-header-actions">
+    <button
+      type="button"
+      className="top-chat-button"
+      onClick={() => navigate("/smart-chat")}
+      aria-label="Open Smart Chat"
+      title="Smart Chat"
+    >
+      <MessageCircle size={22} />
+      <span>Smart Chat</span>
+    </button>
 
-          <h1>
-            VGlytics
-          </h1>
-
-        </div>
-
-
-        {/* =================================================
-            SETTINGS BUTTON
-
-            ONLY PREMIUM USERS SEE THIS AT THE TOP
-            ================================================= */}
-
-        {premiumUnlocked && (
-          <button
-            type="button"
-            className="top-settings-button"
-            onClick={() =>
-              navigate("/settings")
-            }
-            aria-label="Settings"
-          >
-            <Settings
-              size={22}
-            />
-          </button>
-        )}
-
-      </header>
+    {premiumUnlocked && (
+      <button
+        type="button"
+        className="top-settings-button"
+        onClick={() => navigate("/settings")}
+        aria-label="Settings"
+      >
+        <Settings size={22} />
+      </button>
+    )}
+  </div>
+</header>
 
 
       {/* =================================================

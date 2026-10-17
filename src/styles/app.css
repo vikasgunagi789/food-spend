@@ -6529,3 +6529,434 @@ a {
   }
 
 }
+
+
+/* =========================================
+   VGlytics Smart Chat - Responsive Styling
+   ========================================= */
+
+.smart-chat-page {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  max-width: 720px !important;
+  height: calc(100dvh - 20px) !important;
+  min-height: 0 !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: var(--background) !important;
+  border-radius: 18px !important;
+  box-sizing: border-box !important;
+  color: var(--text) !important;
+}
+
+/* Chat header */
+.smart-chat-header {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  padding: 16px !important;
+  background: var(--card) !important;
+  border-bottom: 1px solid var(--border) !important;
+  box-sizing: border-box !important;
+}
+
+.smart-chat-header button {
+  display: flex !important;
+  flex: 0 0 42px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 42px !important;
+  height: 42px !important;
+  padding: 0 !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  background: var(--card) !important;
+  color: var(--text) !important;
+  cursor: pointer !important;
+}
+
+.smart-chat-header > svg {
+  flex: 0 0 auto !important;
+  color: var(--primary) !important;
+}
+
+.smart-chat-header h2 {
+  margin: 0 !important;
+  font-size: 17px !important;
+  line-height: 1.4 !important;
+  font-weight: 700 !important;
+  color: var(--text) !important;
+}
+
+.smart-chat-header p {
+  margin: 3px 0 0 !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  color: var(--muted) !important;
+}
+
+/* Scrollable conversation area */
+.smart-chat-messages {
+  display: flex !important;
+  flex: 1 1 0 !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 14px !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 20px 16px !important;
+  box-sizing: border-box !important;
+  overscroll-behavior: contain !important;
+}
+
+/* Message bubbles */
+.smart-chat-message {
+  display: block !important;
+  width: fit-content !important;
+  max-width: 82% !important;
+  padding: 12px 15px !important;
+  border-radius: 16px !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 2px 7px rgba(20, 60, 60, 0.05) !important;
+}
+
+.smart-chat-message.assistant {
+  align-self: flex-start !important;
+  background: var(--card) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-bottom-left-radius: 5px !important;
+}
+
+.smart-chat-message.user {
+  align-self: flex-end !important;
+  background: var(--primary) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--primary) !important;
+  border-bottom-right-radius: 5px !important;
+}
+
+/* Message composer */
+form.smart-chat-input {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  gap: 9px !important;
+  width: 100% !important;
+  min-height: 76px !important;
+  padding: 12px 14px !important;
+  margin: 0 !important;
+  background: var(--card) !important;
+  border-top: 1px solid var(--border) !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+form.smart-chat-input input {
+  display: block !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  width: 0 !important;
+  height: 46px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  outline: none !important;
+  background: var(--background) !important;
+  color: var(--text) !important;
+  font-family: inherit !important;
+  font-size: 14px !important;
+  box-sizing: border-box !important;
+}
+
+form.smart-chat-input input::placeholder {
+  color: var(--muted) !important;
+  opacity: 1 !important;
+}
+
+form.smart-chat-input input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(15, 159, 154, 0.12) !important;
+}
+
+form.smart-chat-input button {
+  display: flex !important;
+  flex: 0 0 46px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 46px !important;
+  min-width: 46px !important;
+  height: 46px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  background: var(--card) !important;
+  color: var(--primary-dark) !important;
+  cursor: pointer !important;
+  transition: background 0.2s ease, transform 0.2s ease !important;
+}
+
+form.smart-chat-input button[type="submit"] {
+  background: var(--primary) !important;
+  color: #ffffff !important;
+  border-color: var(--primary) !important;
+}
+
+form.smart-chat-input button:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+}
+
+@media (hover: hover) {
+  form.smart-chat-input button:not(:disabled):hover {
+    transform: translateY(-1px) !important;
+  }
+
+  form.smart-chat-input button[type="submit"]:not(:disabled):hover {
+    background: var(--primary-dark) !important;
+  }
+}
+
+/* Mobile screens */
+@media (max-width: 600px) {
+  .smart-chat-page {
+    width: 100% !important;
+    max-width: none !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .smart-chat-header {
+    gap: 10px !important;
+    padding: 12px !important;
+  }
+
+  .smart-chat-header h2 {
+    font-size: 16px !important;
+  }
+
+  .smart-chat-messages {
+    gap: 12px !important;
+    padding: 16px 12px !important;
+  }
+
+  .smart-chat-message {
+    max-width: 88% !important;
+    padding: 11px 13px !important;
+    font-size: 14px !important;
+  }
+
+  form.smart-chat-input {
+    gap: 7px !important;
+    padding: 10px !important;
+    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+  }
+
+  form.smart-chat-input input {
+    font-size: 16px !important;
+    padding: 0 11px !important;
+  }
+
+  form.smart-chat-input button {
+    flex-basis: 42px !important;
+    width: 42px !important;
+    min-width: 42px !important;
+    height: 42px !important;
+    border-radius: 12px !important;
+  }
+}
+
+/* Short screens */
+@media (max-height: 500px) {
+  .smart-chat-header {
+    padding: 8px 12px !important;
+  }
+
+  .smart-chat-messages {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+  }
+
+  form.smart-chat-input {
+    min-height: 60px !important;
+    padding: 7px 10px !important;
+  }
+}
+
+
+/* Fix Smart Chat input above bottom navigation */
+.smart-chat-page {
+  height: calc(100dvh - 90px) !important;
+  max-height: calc(100dvh - 90px) !important;
+  min-height: 0 !important;
+  padding-bottom: 0 !important;
+  overflow: hidden !important;
+}
+
+form.smart-chat-input {
+  position: fixed !important;
+  left: 50% !important;
+  bottom: 75px !important;
+  transform: translateX(-50%) !important;
+
+  width: min(100%, 720px) !important;
+  min-height: 72px !important;
+  margin: 0 !important;
+  padding: 10px 12px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+
+  background: var(--card) !important;
+  border-top: 1px solid var(--border) !important;
+  box-shadow: 0 -4px 14px rgba(20, 60, 60, 0.08) !important;
+  z-index: 10000 !important;
+  box-sizing: border-box !important;
+}
+
+.smart-chat-messages {
+  padding-bottom: 100px !important;
+  overflow-y: auto !important;
+}
+
+/* Mobile layout */
+@media (max-width: 600px) {
+  .smart-chat-page {
+    height: calc(100dvh - 75px) !important;
+    max-height: calc(100dvh - 75px) !important;
+  }
+
+  form.smart-chat-input {
+    bottom: 70px !important;
+    width: 100% !important;
+    padding: 10px !important;
+    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .smart-chat-messages {
+    padding-bottom: 100px !important;
+  }
+}
+
+
+/* =========================================
+   VGlytics Home Header - Smart Chat Icon
+   ========================================= */
+
+.top-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.top-chat-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  min-height: 42px;
+  padding: 0 13px;
+
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  border: 1px solid rgba(15, 159, 154, 0.18);
+  border-radius: 14px;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  box-shadow: 0 2px 6px rgba(15, 159, 154, 0.08);
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.top-chat-button svg {
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+  stroke-width: 2.2;
+}
+
+.top-chat-button:hover {
+  background: #c9f0ec;
+  box-shadow: 0 4px 10px rgba(15, 159, 154, 0.14);
+  transform: translateY(-1px);
+}
+
+.top-chat-button:active {
+  transform: scale(0.97);
+}
+
+.top-chat-button:focus-visible {
+  outline: 3px solid rgba(15, 159, 154, 0.3);
+  outline-offset: 3px;
+}
+
+/* Keep the settings icon aligned */
+.top-settings-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+
+  background: var(--card);
+  color: var(--primary-dark);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+
+.top-settings-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Smaller mobile screens */
+@media (max-width: 380px) {
+  .top-header-actions {
+    gap: 5px;
+  }
+
+  .top-chat-button {
+    gap: 5px;
+    min-height: 38px;
+    padding: 0 9px;
+    font-size: 12px;
+    border-radius: 12px;
+  }
+
+  .top-chat-button svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .top-settings-button {
+    width: 38px;
+    height: 38px;
+  }
+}

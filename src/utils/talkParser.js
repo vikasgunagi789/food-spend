@@ -14,6 +14,68 @@ import {
 import { getBudget } from "../services/expenseService";
 
 
+function recommendRecordedFoods(expenses, budget = null) {
+  if (!Array.isArray(expenses) || expenses.length === 0) {
+    return "I couldn't find any recorded food items yet. Add some food expenses first, then ask me for recommendations.";
+  }
+
+  const foodItems = expenses
+    .filter((expense) => {
+      return (
+        typeof expense.itemName === "string" &&
+        expense.itemName.trim() !== "" &&
+        Number.isFinite(Number(expense.amount)) &&
+        Number(expense.amount) > 0
+      );
+    })
+    .map((expense) => ({
+      name: expense.itemName.trim(),
+      amount: Number(expense.amount),
+      date: expense.date || "",
+    }));
+
+  if (foodItems.length === 0) {
+    return "I couldn't find usable food records in your expense history.";
+  }
+
+  // Group repeated food names and keep the lowest recorded amount.
+  const groupedFoods = new Map();
+
+  for (const food of foodItems) {
+    const key = food.name.toLowerCase();
+    const existing = groupedFoods.get(key);
+
+    if (!existing || food.amount < existing.amount) {
+      groupedFoods.set(key, food);
+    }
+  }
+
+  let recommendations = Array.from(groupedFoods.values());
+
+  if (budget !== null && Number.isFinite(budget) && budget > 0) {
+    recommendations = recommendations.filter(
+      (food) => food.amount <= budget
+    );
+  }
+
+  recommendations.sort((a, b) => a.amount - b.amount);
+
+  if (recommendations.length === 0) {
+    return `I couldn't find recorded food items with an amount of ₹${budget} or less. Try a higher budget.`;
+  }
+
+  const list = recommendations
+    .slice(0, 5)
+    .map(
+      (food) =>
+        `• ${food.name} — previously recorded at ${formatMoney(food.amount)}`
+    )
+    .join("\n");
+
+  return `Here are food items from your expense history:\n${list}\n\nThese are historical amounts, not guaranteed current prices.`;
+}
+
+
 // =========================
 // HELPERS
 // =========================
@@ -902,6 +964,30 @@ export function answerTalkQuestion(
     };
   }
 
+
+  // Food recommendations from recorded expense history
+  const recommendationText = text.toLowerCase();
+
+  
+const wantsFoodRecommendation =
+  /\b(what can i eat|what should i eat|what food|recommend food|suggest food|food recommendation|suggest something to eat|recommend something to eat|cheap food|affordable food|food under|eat under|food within|suggest me food|recommend something)\b/i.test(
+    recommendationText
+  );
+
+
+  if (wantsFoodRecommendation) {
+    const budgetMatch = recommendationText.match(
+      /(?:under|below|within|less than|budget of)\s*(?:₹|rs\.?\s*)?(\d+(?:\.\d+)?)/i
+    );
+
+    const budget = budgetMatch ? Number(budgetMatch[1]) : null;
+
+    return {
+      success: true,
+      type: "food_recommendation",
+      answer: recommendRecordedFoods(expenses, budget),
+    };
+  }
 
   // =========================
   // UNKNOWN
