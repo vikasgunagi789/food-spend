@@ -38,11 +38,9 @@ export async function getFoodRecommendations({
 
   const data = await response.json();
 
-  if (!response.ok || !data.success) {
-    throw new Error(
-      data.error || "Unable to get food recommendations."
-    );
-  }
+  if (!response.ok || data.error) {
+  throw new Error(data.error || "Unable to contact Food AI.");
+}
 
   return data;
 }

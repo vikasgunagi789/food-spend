@@ -6960,3 +6960,31 @@ form.smart-chat-input {
     height: 38px;
   }
 }
+
+
+/* Mobile Smart Chat scrolling fix */
+.smart-chat-messages {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: 0 !important;
+
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
+  overscroll-behavior-y: contain !important;
+}
+
+@media (max-width: 600px) {
+  .smart-chat-page {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .smart-chat-messages {
+    padding-bottom: 110px !important;
+  }
+}
