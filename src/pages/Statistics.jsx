@@ -65,6 +65,14 @@ function formatDate(dateString) {
 function Statistics() {
   const [expenses, setExpenses] = useState([]);
 
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+  const today = new Date();
+
+  return `${today.getFullYear()}-${String(
+    today.getMonth() + 1
+  ).padStart(2, "0")}`;
+});
+
   /* ===================================================
      LOAD EXPENSES
      =================================================== */
@@ -135,66 +143,76 @@ function Statistics() {
      CURRENT MONTH
      =================================================== */
 
-  const now = new Date();
-
-  const monthlyExpenses = useMemo(() => {
-    return getMonthlyExpenses(
-      expenses,
-      now.getFullYear(),
-      now.getMonth()
-    );
-  }, [expenses]);
-
   /* ===================================================
-     TOTAL SPENDING
-     =================================================== */
+   SELECTED MONTH
+   =================================================== */
 
-  const totalSpent = useMemo(() => {
-    return getTotalSpent(monthlyExpenses);
-  }, [monthlyExpenses]);
+const now = new Date();
 
-  /* =====================================================
-     PREVIOUS MONTH
-     ===================================================== */
+const [selectedYear, selectedMonthIndex] =
+  selectedMonth.split("-").map(Number);
 
-  const previousMonthExpenses = useMemo(() => {
-    const previousMonth = new Date(
-      now.getFullYear(),
-      now.getMonth() - 1,
-      1
-    );
+const monthIndex = selectedMonthIndex - 1;
 
-    return getMonthlyExpenses(
-      expenses,
-      previousMonth.getFullYear(),
-      previousMonth.getMonth()
-    );
-  }, [expenses]);
+const selectedMonthDate = new Date(
+  selectedYear,
+  monthIndex,
+  1
+);
 
-  const previousMonthTotal = useMemo(() => {
-    return getTotalSpent(previousMonthExpenses);
-  }, [previousMonthExpenses]);
+const monthlyExpenses = useMemo(() => {
+  return getMonthlyExpenses(
+    expenses,
+    selectedYear,
+    monthIndex
+  );
+}, [expenses, selectedYear, monthIndex]);
 
-  const spendingDifference =
-    totalSpent - previousMonthTotal;
+/* ===================================================
+   TOTAL SPENDING
+   =================================================== */
 
-  const spendingPercentage =
-    previousMonthTotal > 0
-      ? Math.abs(
-          (spendingDifference /
-            previousMonthTotal) *
-            100
-        )
-      : 0;
+const totalSpent = useMemo(() => {
+  return getTotalSpent(monthlyExpenses);
+}, [monthlyExpenses]);
 
-  const previousMonthName =
-    new Date(
-      now.getFullYear(),
-      now.getMonth() - 1,
-      1
-    ).toLocaleDateString("en-IN", {
-      month: "long",
-    });
+/* ===================================================
+   PREVIOUS MONTH COMPARISON
+   =================================================== */
+
+const previousMonthDate = new Date(
+  selectedYear,
+  monthIndex - 1,
+  1
+);
+
+const previousMonthExpenses = useMemo(() => {
+  return getMonthlyExpenses(
+    expenses,
+    previousMonthDate.getFullYear(),
+    previousMonthDate.getMonth()
+  );
+}, [expenses, previousMonthDate.getFullYear(), previousMonthDate.getMonth()]);
+
+const previousMonthTotal = useMemo(() => {
+  return getTotalSpent(previousMonthExpenses);
+}, [previousMonthExpenses]);
+
+const spendingDifference =
+  totalSpent - previousMonthTotal;
+
+const spendingPercentage =
+  previousMonthTotal > 0
+    ? Math.abs(
+        (spendingDifference / previousMonthTotal) * 100
+      )
+    : 0;
+
+const previousMonthName =
+  previousMonthDate.toLocaleDateString("en-IN", {
+    month: "long",
+    year: "numeric",
+  });
 
   /* ===================================================
      CATEGORY TOTALS
@@ -294,88 +312,78 @@ function Statistics() {
      =================================================== */
 
   const dailyChartData = useMemo(() => {
-    const dailyTotals = {};
+  const dailyTotals = {};
 
-    /*
-      Calculate total spending for every
-      recorded date.
-    */
-    monthlyExpenses.forEach((expense) => {
-      const date = expense.date;
+  monthlyExpenses.forEach((expense) => {
+    const date = expense.date;
 
-      dailyTotals[date] =
-        (dailyTotals[date] || 0) +
-        Number(expense.amount || 0);
+    dailyTotals[date] =
+      (dailyTotals[date] || 0) +
+      Number(expense.amount || 0);
+  });
+
+  const daysInMonth = new Date(
+    selectedYear,
+    monthIndex + 1,
+    0
+  ).getDate();
+
+  const isCurrentMonth =
+    selectedYear === now.getFullYear() &&
+    monthIndex === now.getMonth();
+
+  const lastDay = isCurrentMonth
+    ? now.getDate()
+    : daysInMonth;
+
+  const days = [];
+
+  for (let day = 1; day <= lastDay; day++) {
+    const dateKey = [
+      selectedYear,
+      String(monthIndex + 1).padStart(2, "0"),
+      String(day).padStart(2, "0"),
+    ].join("-");
+
+    const date = new Date(
+      selectedYear,
+      monthIndex,
+      day
+    );
+
+    const amount = Number(
+      dailyTotals[dateKey] || 0
+    );
+
+    days.push({
+      date: date.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+      }),
+
+      amount,
+
+      hasExpense: amount > 0,
+
+      status:
+        amount > 0
+          ? "Food expenses recorded"
+          : "No food items added",
     });
+  }
 
-    const today = new Date();
-
-    const year = today.getFullYear();
-    const month = today.getMonth();
-    const todayDate = today.getDate();
-
-    const days = [];
-
-    /*
-      Create a data point for every day
-      from the 1st of the month until today.
-    */
-    for (let day = 1; day <= todayDate; day++) {
-      const date = new Date(
-        year,
-        month,
-        day
-      );
-
-      /*
-        Create the same YYYY-MM-DD format
-        used by the stored expense date.
-      */
-      const dateKey = [
-        year,
-        String(month + 1).padStart(2, "0"),
-        String(day).padStart(2, "0"),
-      ].join("-");
-
-      const amount = Number(
-        dailyTotals[dateKey] || 0
-      );
-
-      days.push({
-        date: date.toLocaleDateString(
-          "en-IN",
-          {
-            day: "numeric",
-            month: "short",
-          }
-        ),
-
-        amount,
-
-        /*
-          Used by the custom tooltip.
-        */
-        hasExpense: amount > 0,
-
-        status:
-          amount > 0
-            ? "Food expenses recorded"
-            : "No food items added",
-      });
-    }
-
-    return days;
-  }, [monthlyExpenses]);
+  return days;
+}, [monthlyExpenses, selectedYear, monthIndex]);
 
   /* ===================================================
      MONTH NAME
      =================================================== */
 
   const currentMonthName =
-    now.toLocaleDateString("en-IN", {
-      month: "long",
-      year: "numeric",
-    });
+  selectedMonthDate.toLocaleDateString("en-IN", {
+    month: "long",
+    year: "numeric",
+  });
 
   /* ===================================================
      RENDER
@@ -401,9 +409,41 @@ function Statistics() {
           </h1>
 
           <p>
-            Your spending overview for{" "}
-            {currentMonthName}
-          </p>
+  Your spending overview for {currentMonthName}
+</p>
+
+<div style={{ marginTop: "14px" }}>
+  <label
+    htmlFor="statistics-month"
+    style={{
+      display: "block",
+      marginBottom: "6px",
+      fontSize: "13px",
+      fontWeight: 600,
+    }}
+  >
+    Select Month
+  </label>
+
+  <input
+    id="statistics-month"
+    type="month"
+    value={selectedMonth}
+    max={`${now.getFullYear()}-${String(
+      now.getMonth() + 1
+    ).padStart(2, "0")}`}
+    onChange={(event) =>
+      setSelectedMonth(event.target.value)
+    }
+    style={{
+      padding: "10px 12px",
+      borderRadius: "10px",
+      border: "1px solid #d1d5db",
+      fontSize: "14px",
+      maxWidth: "220px",
+    }}
+  />
+</div>
 
         </div>
 

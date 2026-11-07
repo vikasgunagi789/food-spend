@@ -102,6 +102,9 @@ function Home() {
   const [showVoiceExpense, setShowVoiceExpense] =
     useState(false);
 
+  const [selectedWeekOffset, setSelectedWeekOffset] =
+  useState(0);
+
 
   // =======================================================
   // PREMIUM STATUS
@@ -398,13 +401,15 @@ function Home() {
   // =======================================================
 
   const weeklyReport =
-    useMemo(
-      () =>
-        getWeeklyReport(
-          expenses
-        ),
-      [expenses]
-    );
+  useMemo(
+    () =>
+      getWeeklyReport(
+        expenses,
+        new Date(),
+        selectedWeekOffset
+      ),
+    [expenses, selectedWeekOffset]
+  );
 
 
   // =======================================================
@@ -916,8 +921,10 @@ function Home() {
           ================================================= */}
 
       <WeeklyMoneyReport
-        report={weeklyReport}
-      />
+  report={weeklyReport}
+  selectedWeekOffset={selectedWeekOffset}
+  onWeekChange={setSelectedWeekOffset}
+/>
 
 
       {/* =================================================

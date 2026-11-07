@@ -6988,3 +6988,67 @@ form.smart-chat-input {
     padding-bottom: 110px !important;
   }
 }
+
+
+/* Weekly period selector */
+
+.weekly-period-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+
+.weekly-period-selector label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary, #777);
+}
+
+.weekly-period-selector select {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color, #ddd);
+  background: var(--card-bg, #fff);
+  color: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+  max-width: 180px;
+}
+
+.weekly-period-selector select:focus {
+  border-color: #087d79;
+}
+
+.weekly-navigation {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.weekly-navigation button {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 10px;
+  background: var(--card-bg, #fff);
+  color: inherit;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.weekly-navigation button:hover:not(:disabled) {
+  background: #087d79;
+  color: white;
+}
+
+.weekly-navigation button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

@@ -5,6 +5,8 @@ import {
   Receipt,
   Wallet,
   BarChart3,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 function formatMoney(amount) {
@@ -25,6 +27,8 @@ function formatDate(date) {
 
 function WeeklyMoneyReport({
   report,
+  selectedWeekOffset = 0,
+  onWeekChange,
 }) {
   if (!report) {
     return null;
@@ -67,31 +71,82 @@ function WeeklyMoneyReport({
 
       <div className="weekly-report-header">
 
-        <div className="weekly-report-title">
+  <div className="weekly-report-title">
 
-          <div className="weekly-report-icon">
-            <CalendarDays size={21} />
-          </div>
+    <div className="weekly-report-icon">
+      <CalendarDays size={21} />
+    </div>
 
-          <div>
-            <p>
-              Weekly Money Report
-            </p>
+    <div>
+      <p>Weekly Money Report</p>
 
-            <h2>
-              This Week
-            </h2>
-          </div>
+      <h2>
+        {selectedWeekOffset === 0
+          ? "This Week"
+          : selectedWeekOffset === -1
+          ? "Last Week"
+          : `${Math.abs(selectedWeekOffset)} Weeks Ago`}
+      </h2>
+    </div>
 
-        </div>
+  </div>
 
-        <div className="weekly-report-date">
-          {formatDate(startDate)}
-          {" – "}
-          {formatDate(endDate)}
-        </div>
+  <div className="weekly-navigation">
 
-      </div>
+    <button
+      type="button"
+      onClick={() =>
+        onWeekChange(selectedWeekOffset - 1)
+      }
+      aria-label="Previous week"
+    >
+      <ChevronLeft size={22} />
+    </button>
+
+    <button
+      type="button"
+      onClick={() =>
+        onWeekChange(selectedWeekOffset + 1)
+      }
+      disabled={selectedWeekOffset === 0}
+      aria-label="Next week"
+    >
+      <ChevronRight size={22} />
+    </button>
+
+  </div>
+
+</div>
+
+<div className="weekly-report-date">
+  {formatDate(startDate)}
+  {" – "}
+  {formatDate(endDate)}
+</div>
+
+      <div className="weekly-period-selector">
+  <label htmlFor="weekly-period">
+    View spending:
+  </label>
+
+  <select
+    id="weekly-period"
+    value={selectedWeekOffset}
+    onChange={(event) =>
+      onWeekChange(Number(event.target.value))
+    }
+  >
+    <option value={0}>This Week</option>
+    <option value={-1}>Last Week</option>
+    <option value={-2}>2 Weeks Ago</option>
+    <option value={-3}>3 Weeks Ago</option>
+    <option value={-4}>4 Weeks Ago</option>
+    <option value={-5}>5 Weeks Ago</option>
+    <option value={-6}>6 Weeks Ago</option>
+    <option value={-7}>7 Weeks Ago</option>
+    <option value={-8}>8 Weeks Ago</option>
+  </select>
+</div>
 
 
       {/* =========================
@@ -104,7 +159,7 @@ function WeeklyMoneyReport({
           <BarChart3 size={32} />
 
           <h3>
-            No spending this week
+            No spending recorded for this week
           </h3>
 
           <p>
@@ -154,7 +209,7 @@ function WeeklyMoneyReport({
                 {spendingIncreased
                   ? "more"
                   : "less"}{" "}
-                than last week
+than the previous week
 
               </div>
             )}
@@ -268,8 +323,8 @@ function WeeklyMoneyReport({
                 </h3>
 
                 <p>
-                  Your spending across
-                  the last 7 days
+                  Your spending during
+this selected week
                 </p>
               </div>
 

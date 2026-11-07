@@ -203,10 +203,14 @@ function getTotal(expenses) {
 
 export function getWeeklyReport(
   expenses = [],
-  referenceDate = new Date()
+  referenceDate = new Date(),
+  weekOffset = 0
 ) {
   const currentDate =
     new Date(referenceDate);
+
+  // Move to the selected historical week
+
 
   currentDate.setHours(
     0,
@@ -217,6 +221,10 @@ export function getWeeklyReport(
 
   const currentMonday =
     getMonday(currentDate);
+
+  currentMonday.setDate(
+  currentMonday.getDate() + weekOffset * 7
+);
 
   const previousMonday =
     new Date(currentMonday);
