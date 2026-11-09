@@ -19,6 +19,11 @@ import {
   backupLocalExpenses,
 } from "./expenseService";
 
+import {
+  getIngredientPurchases,
+  recordIngredientUsage,
+} from "../services/ingredientService";
+
 // =====================================================
 // FIRESTORE EXPENSE PATH
 // =====================================================

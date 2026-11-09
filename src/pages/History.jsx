@@ -12,6 +12,10 @@ import {
 import { auth } from "../lib/firebase";
 
 import {
+  getIngredientUsages,
+} from "../services/ingredientService";
+
+import {
   deleteCloudExpense,
 } from "../services/cloudExpenseService";
 
@@ -46,8 +50,35 @@ function History() {
     useState(null);
 
   function loadExpenses() {
-    setExpenses(getExpenses());
-  }
+  const allExpenses = getExpenses();
+  const usages = getIngredientUsages();
+
+  const ingredientCosts = {};
+
+  usages.forEach((usage) => {
+    if (!usage.expenseId) return;
+
+    ingredientCosts[usage.expenseId] =
+      (ingredientCosts[usage.expenseId] || 0) +
+      Number(usage.allocatedCost || 0);
+  });
+
+  const updatedExpenses = allExpenses.map((expense) => {
+    const manualAmount = Number(expense.amount || 0);
+    const ingredientAmount =
+      ingredientCosts[expense.id] || 0;
+
+    return {
+      ...expense,
+      displayAmount:
+        manualAmount > 0
+          ? manualAmount
+          : ingredientAmount,
+    };
+  });
+
+  setExpenses(updatedExpenses);
+}
 
   useEffect(() => {
   loadExpenses();
@@ -154,10 +185,10 @@ function History() {
   }, [filteredExpenses]);
 
   const totalSpent = filteredExpenses.reduce(
-    (total, expense) =>
-      total + Number(expense.amount),
-    0
-  );
+  (total, expense) =>
+    total + Number(expense.displayAmount || 0),
+  0
+);
 
   return (
     <div className="page history-page">
@@ -293,13 +324,11 @@ function History() {
           {groupedExpenses.map(
             ([date, dayExpenses]) => {
 
-              const dayTotal =
-                dayExpenses.reduce(
-                  (total, expense) =>
-                    total +
-                    Number(expense.amount),
-                  0
-                );
+              const dayTotal = dayExpenses.reduce(
+  (total, expense) =>
+    total + Number(expense.displayAmount || 0),
+  0
+);
 
               return (
                 <section

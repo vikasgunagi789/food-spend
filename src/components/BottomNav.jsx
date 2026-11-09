@@ -1,3 +1,4 @@
+
 import {
   useEffect,
   useState,
@@ -10,8 +11,7 @@ import {
   History,
   PieChart,
   Mic,
-  Settings,
-  WalletCards,
+  Package,
 } from "lucide-react";
 
 import {
@@ -20,15 +20,11 @@ import {
 
 function BottomNav({ onTalk }) {
   const [premiumUnlocked, setPremiumUnlocked] =
-    useState(() =>
-      isGeneralExpensesUnlocked()
-    );
+    useState(() => isGeneralExpensesUnlocked());
 
   useEffect(() => {
     function refreshPremiumStatus() {
-      setPremiumUnlocked(
-        isGeneralExpensesUnlocked()
-      );
+      setPremiumUnlocked(isGeneralExpensesUnlocked());
     }
 
     window.addEventListener(
@@ -57,111 +53,54 @@ function BottomNav({ onTalk }) {
   return (
     <nav className="bottom-nav">
 
-      {/* HOME */}
       <NavLink
         to="/"
         className={({ isActive }) =>
-          isActive
-            ? "nav-item active"
-            : "nav-item"
+          isActive ? "nav-item active" : "nav-item"
         }
       >
         <Home size={21} />
-
-        <span>
-          Home
-        </span>
+        <span>Home</span>
       </NavLink>
 
-
-      {/* HISTORY */}
       <NavLink
         to="/history"
         className={({ isActive }) =>
-          isActive
-            ? "nav-item active"
-            : "nav-item"
+          isActive ? "nav-item active" : "nav-item"
         }
       >
         <History size={21} />
-
-        <span>
-          History
-        </span>
+        <span>History</span>
       </NavLink>
 
-
-      {/* TALK */}
       <button
         type="button"
         className="nav-item talk-nav-item"
         onClick={onTalk}
       >
         <Mic size={23} />
-
-        <span>
-          Talk
-        </span>
+        <span>Talk</span>
       </button>
 
+      <NavLink
+        to="/ingredients"
+        className={({ isActive }) =>
+          isActive ? "nav-item active" : "nav-item"
+        }
+      >
+        <Package size={21} />
+        <span>Ingredients</span>
+      </NavLink>
 
-      {/* STATISTICS */}
       <NavLink
         to="/statistics"
         className={({ isActive }) =>
-          isActive
-            ? "nav-item active"
-            : "nav-item"
+          isActive ? "nav-item active" : "nav-item"
         }
       >
         <PieChart size={21} />
-
-        <span>
-          Statistics
-        </span>
+        <span>Statistics</span>
       </NavLink>
-
-
-      {/* PREMIUM:
-          GENERAL EXPENSES
-      */}
-      {premiumUnlocked && (
-        <NavLink
-          to="/general-expenses"
-          className={({ isActive }) =>
-            isActive
-              ? "nav-item active general-nav-item"
-              : "nav-item general-nav-item"
-          }
-        >
-          <WalletCards size={21} />
-
-          <span>
-            General
-          </span>
-        </NavLink>
-      )}
-
-
-      {/* NON-PREMIUM:
-          SETTINGS STAYS IN BOTTOM NAV
-      */}
-      {!premiumUnlocked && (
-        <NavLink
-          to="/settings"
-          className={({ isActive }) =>
-            isActive
-              ? "nav-item active"
-              : "nav-item"
-          }
-        >
-          <Settings size={21} />
-
-          <span>
-            Settings
-          </span>
-        </NavLink>
-      )}
 
     </nav>
   );

@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+
 import {
   BarChart3,
   TrendingUp,
@@ -8,9 +11,17 @@ import {
   CalendarDays,
   Utensils,
   Trophy,
+  Download,
 } from "lucide-react";
 
-import { getExpenses } from "../services/expenseService";
+import {
+  getExpenses,
+  getBudget,
+} from "../services/expenseService";
+
+import {
+  getIngredientUsages,
+} from "../services/ingredientService";
 
 import {
   getMonthlyExpenses,
@@ -64,6 +75,7 @@ function formatDate(dateString) {
 
 function Statistics() {
   const [expenses, setExpenses] = useState([]);
+  const [monthlyBudget, setMonthlyBudget] = useState(getBudget());
 
   const [selectedMonth, setSelectedMonth] = useState(() => {
   const today = new Date();
@@ -72,6 +84,159 @@ function Statistics() {
     today.getMonth() + 1
   ).padStart(2, "0")}`;
 });
+
+
+function handleExportCSV() {
+  console.log("VGlytics Export Data:", monthlyExpenses);
+  if (monthlyExpenses.length === 0) {
+    alert("No expenses available to export.");
+    return;
+  }
+
+  const headers = [
+    "Date",
+    "Item Name",
+    "Category",
+    "Amount",
+  ];
+
+  
+const rows = monthlyExpenses.map((expense) => {
+  const expenseDate =
+    expense.date ||
+    expense.createdAt ||
+    expense.timestamp ||
+    "";
+
+  const formattedDate = expenseDate
+    ? new Date(expenseDate).toLocaleDateString("en-IN")
+    : "Date unavailable";
+
+  return [
+    formattedDate,
+    expense.itemName || "Unnamed Expense",
+    expense.category || "Other",
+    Number(expense.amount || 0).toFixed(2),
+  ];
+});
+
+
+  const escapeCSV = (value) =>
+    `"${String(value).replace(/"/g, '""')}"`;
+
+  const csvContent = [
+    headers,
+    ...rows,
+  ]
+    .map((row) => row.map(escapeCSV).join(","))
+    .join("\n");
+
+  const blob = new Blob(
+    ["\uFEFF" + csvContent],
+    { type: "text/csv;charset=utf-8;" }
+  );
+
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = `VGlytics-${selectedMonth}.csv`;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+}
+
+
+function handleExportMonthlyReport() {
+  if (monthlyExpenses.length === 0) {
+    alert("No expenses available for this month.");
+    return;
+  }
+
+  const totalSpent = monthlyExpenses.reduce(
+    (total, expense) => total + Number(expense.amount || 0),
+    0
+  );
+
+  const remaining = monthlyBudget - totalSpent;
+
+  
+const sortedExpenses = [...monthlyExpenses].sort((a, b) => {
+  return new Date(a.date) - new Date(b.date);
+});
+
+
+  const categoryTotals = {};
+
+  monthlyExpenses.forEach((expense) => {
+    const category = expense.category || "Other";
+
+    categoryTotals[category] =
+      (categoryTotals[category] || 0) +
+      Number(expense.amount || 0);
+  });
+
+  
+const rows = [
+  ["VGlytics Monthly Statistics Report"],
+  ["Month", selectedMonth],
+  [],
+  ["MONTHLY SUMMARY"],
+  ["Total Expenses", totalSpent.toFixed(2)],
+  ["Monthly Budget", monthlyBudget.toFixed(2)],
+  ["Remaining Budget", remaining.toFixed(2)],
+  ["Number of Expenses", monthlyExpenses.length],
+  [],
+  ["CATEGORY-WISE SPENDING"],
+  ["Category", "Total Spending"],
+  ...Object.entries(categoryTotals).map(([category, amount]) => [
+    category,
+    amount.toFixed(2),
+  ]),
+  [],
+  ["INDIVIDUAL EXPENSE DETAILS"],
+  ["Date", "Item Name", "Category", "Amount"],
+  ...sortedExpenses.map((expense) => [
+    expense.date || "Date unavailable",
+    expense.itemName || "Unnamed Expense",
+    expense.category || "Other",
+    Number(expense.amount || 0).toFixed(2),
+  ]),
+];
+
+
+  const csv = rows
+    .map((row) =>
+      row.map((value) =>
+        `"${String(value ?? "").replace(/"/g, '""')}"`
+      ).join(",")
+    )
+    .join("\r\n");
+
+  const blob = new Blob(["\uFEFF" + csv], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = `VGlytics-Monthly-Report-${selectedMonth}.csv`;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+}
+
+
+
+const [selectedCalendarDay, setSelectedCalendarDay] = useState(null);
 
   /* ===================================================
      LOAD EXPENSES
@@ -136,8 +301,41 @@ function Statistics() {
 }, []);
 
   function loadExpenses() {
-    setExpenses(getExpenses());
-  }
+  const allExpenses = getExpenses();
+  const usages = getIngredientUsages();
+
+  console.log("ALL EXPENSES:", allExpenses);
+console.log("INGREDIENT USAGES:", usages);
+
+  const ingredientCosts = {};
+
+  usages.forEach((usage) => {
+    if (!usage.expenseId) return;
+
+    ingredientCosts[usage.expenseId] =
+      (ingredientCosts[usage.expenseId] || 0) +
+      Number(usage.allocatedCost || 0);
+  });
+
+  const updatedExpenses = allExpenses.map((expense) => {
+    const manualAmount = Number(expense.amount || 0);
+    const ingredientAmount =
+      ingredientCosts[expense.id] || 0;
+
+    return {
+      ...expense,
+
+      // Use ingredient allocation when no manual amount exists.
+      // Otherwise preserve the manually entered amount.
+      amount:
+        manualAmount > 0
+          ? manualAmount
+          : ingredientAmount,
+    };
+  });
+
+  setExpenses(updatedExpenses);
+}
 
   /* ===================================================
      CURRENT MONTH
@@ -168,6 +366,133 @@ const monthlyExpenses = useMemo(() => {
   );
 }, [expenses, selectedYear, monthIndex]);
 
+
+function handleExportCSV() {
+  if (monthlyExpenses.length === 0) {
+    alert("No expenses available to export.");
+    return;
+  }
+
+  const headers = [
+    "Date",
+    "Item Name",
+    "Category",
+    "Amount",
+  ];
+
+  const rows = monthlyExpenses.map((expense) => {
+    return [
+      expense.date || "Date unavailable",
+      expense.itemName || "Unnamed Expense",
+      expense.category || "Other",
+      Number(expense.amount || 0).toFixed(2),
+    ];
+  });
+
+  const escapeCSV = (value) =>
+    `"${String(value).replace(/"/g, '""')}"`;
+
+  const csvContent = [
+    headers,
+    ...rows,
+  ]
+    .map((row) => row.map(escapeCSV).join(","))
+    .join("\r\n");
+
+  const blob = new Blob(
+    ["\uFEFF" + csvContent],
+    { type: "text/csv;charset=utf-8;" }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = `VGlytics-${selectedMonth}.csv`;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+}
+
+const handleExportPDF = () => {
+  if (monthlyExpenses.length === 0) {
+    alert("No expenses found for this month.");
+    return;
+  }
+
+  const doc = new jsPDF();
+
+  // Report title
+  doc.setFontSize(18);
+  doc.text("VGlytics Monthly Statistics Report", 14, 20);
+
+  doc.setFontSize(11);
+  doc.text(`Month: ${selectedMonth}`, 14, 30);
+
+  // Calculate category totals
+  const categoryMap = {};
+
+  monthlyExpenses.forEach((expense) => {
+    const category = expense.category || "Other";
+    categoryMap[category] =
+      (categoryMap[category] || 0) + Number(expense.amount || 0);
+  });
+
+  const categoryRows = Object.entries(categoryMap).map(
+    ([category, amount]) => [
+      category,
+      `Rs. ${amount.toFixed(2)}`,
+    ]
+  );
+
+  // Summary section
+  autoTable(doc, {
+    startY: 38,
+    head: [["Monthly Summary", "Amount"]],
+    body: [
+      ["Total Spent", `Rs. ${Number(totalSpent).toFixed(2)}`],
+      ["Monthly Budget", `Rs. ${Number(monthlyBudget).toFixed(2)}`],
+      [
+        "Remaining Budget",
+        `Rs. ${(Number(monthlyBudget) - Number(totalSpent)).toFixed(2)}`,
+      ],
+      ["Number of Expenses", String(monthlyExpenses.length)],
+    ],
+  });
+
+  // Category breakdown
+  autoTable(doc, {
+    startY: doc.lastAutoTable.finalY + 10,
+    head: [["Category", "Total Spent"]],
+    body: categoryRows,
+  });
+
+  // Individual expense details
+  const sortedExpenses = [...monthlyExpenses].sort((a, b) =>
+    String(a.date || "").localeCompare(String(b.date || ""))
+  );
+
+  const expenseRows = sortedExpenses.map((expense) => [
+    formatDate(expense.date),
+    expense.itemName || "Unnamed Item",
+    expense.category || "Other",
+    `Rs. ${Number(expense.amount || 0).toFixed(2)}`,
+  ]);
+
+  autoTable(doc, {
+    startY: doc.lastAutoTable.finalY + 10,
+    head: [["Date", "Item Name", "Category", "Amount"]],
+    body: expenseRows,
+  });
+
+  // Download PDF
+  doc.save(`VGlytics-Monthly-Report-${selectedMonth}.pdf`);
+};
+
+
 /* ===================================================
    TOTAL SPENDING
    =================================================== */
@@ -176,6 +501,19 @@ const totalSpent = useMemo(() => {
   return getTotalSpent(monthlyExpenses);
 }, [monthlyExpenses]);
 
+// BUDGET VS ACTUAL SPENDING
+
+const remainingBudget = monthlyBudget - totalSpent;
+
+const budgetUsedPercentage =
+  monthlyBudget > 0
+    ? (totalSpent / monthlyBudget) * 100
+    : 0;
+
+const budgetProgress = Math.min(
+  budgetUsedPercentage,
+  100
+);
 /* ===================================================
    PREVIOUS MONTH COMPARISON
    =================================================== */
@@ -306,6 +644,79 @@ const previousMonthName =
     "#ef4444",
     "#8b5cf6",
   ];
+
+  /* ===================================================
+   CALENDAR HEATMAP DATA
+   =================================================== */
+
+const calendarData = useMemo(() => {
+  const firstDay = new Date(
+    selectedYear,
+    monthIndex,
+    1
+  );
+
+  const daysInMonth = new Date(
+    selectedYear,
+    monthIndex + 1,
+    0
+  ).getDate();
+
+  const startingDay = firstDay.getDay();
+
+  const dailyTotals = {};
+
+  monthlyExpenses.forEach((expense) => {
+    const dateKey = expense.date;
+
+    dailyTotals[dateKey] =
+      (dailyTotals[dateKey] || 0) +
+      Number(expense.amount || 0);
+  });
+
+  const maxSpending = Math.max(
+    0,
+    ...Object.values(dailyTotals)
+  );
+
+  const days = Array.from(
+    { length: daysInMonth },
+    (_, index) => {
+      const day = index + 1;
+
+      const dateKey = [
+        selectedYear,
+        String(monthIndex + 1).padStart(2, "0"),
+        String(day).padStart(2, "0"),
+      ].join("-");
+
+      const amount = dailyTotals[dateKey] || 0;
+
+      let intensity = 0;
+
+      if (amount > 0 && maxSpending > 0) {
+        const ratio = amount / maxSpending;
+
+        if (ratio <= 0.25) intensity = 1;
+        else if (ratio <= 0.50) intensity = 2;
+        else if (ratio <= 0.75) intensity = 3;
+        else intensity = 4;
+      }
+
+      return {
+        day,
+        dateKey,
+        amount,
+        intensity,
+      };
+    }
+  );
+
+  return {
+    startingDay,
+    days,
+  };
+}, [monthlyExpenses, selectedYear, monthIndex]);
 
   /* ===================================================
      DAILY SPENDING DATA
@@ -447,9 +858,48 @@ const previousMonthName =
 
         </div>
 
-        <div className="statistics-header-icon">
-          <BarChart3 size={24} />
-        </div>
+        <div style={{
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+  flexWrap: "wrap",
+}}>
+
+  <button
+    type="button"
+    // onClick={handleExportCSV}
+    onClick={handleExportMonthlyReport}
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      padding: "11px 16px",
+      borderRadius: "10px",
+      border: "none",
+      background: "#0f9f9a",
+      color: "#ffffff",
+      fontWeight: 600,
+      cursor: "pointer",
+    }}
+  >
+    <Download size={18} />
+    Export CSV
+  </button>
+
+  <button
+  type="button"
+  onClick={handleExportPDF}
+  className="your-existing-button-class"
+>
+  <Download size={18} />
+  Export PDF
+</button>
+
+  <div className="statistics-header-icon">
+    <BarChart3 size={24} />
+  </div>
+
+</div>
 
       </div>
 
@@ -483,161 +933,7 @@ const previousMonthName =
         </div>
 
 
-        {/* =================================================
-            MONTH COMPARISON
-            ================================================= */}
-
-        <section className="statistics-section">
-
-          <div className="statistics-section-title">
-
-            <TrendingUp size={20} />
-
-            <div>
-
-              <h2>
-                Monthly Comparison
-              </h2>
-
-              <p>
-                Compare your spending with last month.
-              </p>
-
-            </div>
-
-          </div>
-
-
-          <div className="month-comparison-card">
-
-            {/* CURRENT MONTH */}
-
-            <div className="month-comparison-item">
-
-              <span>
-                {currentMonthName}
-              </span>
-
-              <strong>
-                {formatMoney(totalSpent)}
-              </strong>
-
-            </div>
-
-
-            <div className="month-comparison-divider">
-
-              <span>
-                vs
-              </span>
-
-            </div>
-
-
-            {/* PREVIOUS MONTH */}
-
-            <div className="month-comparison-item">
-
-              <span>
-                {previousMonthName}
-              </span>
-
-              <strong>
-                {formatMoney(previousMonthTotal)}
-              </strong>
-
-            </div>
-
-          </div>
-
-
-          {/* COMPARISON MESSAGE */}
-
-          <div
-            className={`month-comparison-message ${
-              spendingDifference > 0
-                ? "comparison-up"
-                : spendingDifference < 0
-                ? "comparison-down"
-                : "comparison-same"
-            }`}
-          >
-
-            {previousMonthTotal === 0 ? (
-
-              <>
-
-                <BarChart3 size={18} />
-
-                <span>
-                  No spending data from last month to compare.
-                </span>
-
-              </>
-
-            ) : spendingDifference > 0 ? (
-
-              <>
-
-                <TrendingUp size={18} />
-
-                <span>
-                  You spent{" "}
-                  <strong>
-                    {formatMoney(
-                      Math.abs(
-                        spendingDifference
-                      )
-                    )}
-                  </strong>{" "}
-                  more than last month{" "}
-                  ({Math.round(
-                    spendingPercentage
-                  )}%).
-                </span>
-
-              </>
-
-            ) : spendingDifference < 0 ? (
-
-              <>
-
-                <TrendingDown size={18} />
-
-                <span>
-                  You spent{" "}
-                  <strong>
-                    {formatMoney(
-                      Math.abs(
-                        spendingDifference
-                      )
-                    )}
-                  </strong>{" "}
-                  less than last month{" "}
-                  ({Math.round(
-                    spendingPercentage
-                  )}%).
-                </span>
-
-              </>
-
-            ) : (
-
-              <>
-
-                <Wallet size={18} />
-
-                <span>
-                  Your spending is the same as last month.
-                </span>
-
-              </>
-
-            )}
-
-          </div>
-
-        </section>
+        
 
 
         {/* AVERAGE */}
@@ -715,6 +1011,79 @@ const previousMonthName =
         </div>
 
       </div>
+
+      {/* =================================================
+    BUDGET VS ACTUAL SPENDING
+    ================================================= */}
+
+<section className="statistics-section">
+
+  <div className="statistics-section-title">
+
+    <Wallet size={20} />
+
+    <div>
+      <h2>Budget vs Actual Spending</h2>
+      <p>Track your monthly budget against actual expenses.</p>
+    </div>
+
+  </div>
+
+  <div className="budget-comparison-card">
+
+    <div className="budget-comparison-values">
+
+      <div>
+        <span>Monthly Budget</span>
+        <strong>{formatMoney(monthlyBudget)}</strong>
+      </div>
+
+      <div>
+        <span>Actual Spending</span>
+        <strong>{formatMoney(totalSpent)}</strong>
+      </div>
+
+    </div>
+
+    <div className="budget-progress-info">
+
+      <span>Budget Used</span>
+
+      <strong>
+        {Math.round(budgetUsedPercentage)}%
+      </strong>
+
+    </div>
+
+    <div className="budget-comparison-progress">
+      <div
+        className={`budget-comparison-fill ${
+          budgetUsedPercentage > 100 ? "over-budget" : ""
+        }`}
+        style={{ width: `${budgetProgress}%` }}
+      />
+    </div>
+
+    <div className="budget-remaining">
+
+      {monthlyBudget <= 0 ? (
+        <p>Please set a monthly budget to view your budget status.</p>
+      ) : remainingBudget >= 0 ? (
+        <p>
+          Remaining budget: <strong>{formatMoney(remainingBudget)}</strong>
+        </p>
+      ) : (
+        <p>
+          You exceeded your budget by{" "}
+          <strong>{formatMoney(Math.abs(remainingBudget))}</strong>
+        </p>
+      )}
+
+    </div>
+
+  </div>
+
+</section>
 
 
       {/* =================================================
@@ -1146,6 +1515,94 @@ const previousMonthName =
         </div>
 
       </section>
+
+      {/* SPENDING CALENDAR HEATMAP */}
+<div className="calendar-heatmap">
+  <div className="calendar-heatmap-header">
+    <h3>Spending Calendar</h3>
+    <p>Daily spending throughout the month</p>
+  </div>
+
+  <div className="calendar-weekdays">
+    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+      <div key={day}>{day}</div>
+    ))}
+  </div>
+
+  <div className="calendar-days">
+    {Array.from({ length: calendarData.startingDay }).map((_, index) => (
+      <div key={`empty-${index}`} className="calendar-empty" />
+    ))}
+
+    {calendarData.days.map((day) => (
+      <button
+  key={day.dateKey}
+  type="button"
+  className={`calendar-day intensity-${day.intensity} ${
+    selectedCalendarDay === day.dateKey ? "selected" : ""
+  }`}
+  title={`${day.dateKey}: ₹${day.amount.toFixed(2)}`}
+  onClick={() => setSelectedCalendarDay(day.dateKey)}
+>
+  <span>{day.day}</span>
+</button>
+    ))}
+  </div>
+
+  {selectedCalendarDay && (
+  <div className="calendar-day-details">
+    <h4>{selectedCalendarDay}</h4>
+
+    <p>
+      Total spent: ₹
+      {(
+        calendarData.days.find(
+          (day) => day.dateKey === selectedCalendarDay
+        )?.amount || 0
+      ).toFixed(2)}
+    </p>
+
+    <p>
+      Number of expenses:{" "}
+      {
+        monthlyExpenses.filter(
+          (expense) => expense.date === selectedCalendarDay
+        ).length
+      }
+    </p>
+
+    <div className="calendar-expense-list">
+      <h5>Expense Details</h5>
+
+      {monthlyExpenses
+        .filter(
+          (expense) => expense.date === selectedCalendarDay
+        )
+        .map((expense) => (
+          <div
+            className="calendar-expense-item"
+            key={expense.id}
+          >
+            <span>{expense.itemName || "Unnamed Expense"}</span>
+
+            <strong>₹{Number(expense.amount || 0).toFixed(2)}</strong>
+          </div>
+        ))}
+    </div>
+  </div>
+)}
+
+  <div className="calendar-legend">
+    <span>Less</span>
+    {[0, 1, 2, 3, 4].map((level) => (
+      <div
+        key={level}
+        className={`calendar-legend-box intensity-${level}`}
+      />
+    ))}
+    <span>More</span>
+  </div>
+</div>
 
 
       {/* =================================================

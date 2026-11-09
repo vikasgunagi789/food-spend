@@ -11,6 +11,7 @@ import {
   Cookie,
   Settings,
   MessageCircle,
+  WalletCards,
 } from "lucide-react";
 
 
@@ -32,6 +33,10 @@ import {
   getExpenses,
   getBudget,
 } from "../services/expenseService";
+
+import {
+  getIngredientUsages,
+} from "../services/ingredientService";
 
 
 // =========================================================
@@ -121,20 +126,36 @@ function Home() {
   // =======================================================
 
   function refreshData() {
-    setExpenses(
-      getExpenses()
-    );
+  const allExpenses = getExpenses();
+  const usages = getIngredientUsages();
 
-    setBudget(
-      getBudget()
-    );
+  const ingredientCosts = {};
 
-    setPremiumUnlocked(
-      isGeneralExpensesUnlocked()
-    );
-  }
+  usages.forEach((usage) => {
+    if (!usage.expenseId) return;
 
+    ingredientCosts[usage.expenseId] =
+      (ingredientCosts[usage.expenseId] || 0) +
+      Number(usage.allocatedCost || 0);
+  });
 
+  const updatedExpenses = allExpenses.map((expense) => {
+    const manualAmount = Number(expense.amount || 0);
+    const ingredientAmount =
+      ingredientCosts[expense.id] || 0;
+
+    return {
+      ...expense,
+      amount: manualAmount > 0
+        ? manualAmount
+        : ingredientAmount,
+    };
+  });
+
+  setExpenses(updatedExpenses);
+  setBudget(getBudget());
+  setPremiumUnlocked(isGeneralExpensesUnlocked());
+}
   // =======================================================
   // INITIAL LOAD
   // =======================================================
@@ -184,6 +205,11 @@ function Home() {
     handlePremiumLocked
   );
 
+  window.addEventListener(
+  "ingredientsUpdated",
+  handleExpensesSynced
+);
+
   return () => {
     window.removeEventListener(
       "focus",
@@ -201,9 +227,16 @@ function Home() {
     );
 
     window.removeEventListener(
-      "general-expenses-locked",
-      handlePremiumLocked
-    );
+  "general-expenses-locked",
+  handlePremiumLocked
+);
+
+window.removeEventListener(
+  "ingredientsUpdated",
+  handleExpensesSynced
+);
+
+
   };
 }, []);
 
@@ -495,29 +528,48 @@ function Home() {
     </h1>
   </div>
 
-  <div className="top-header-actions">
+  
+
+<div className="top-header-actions">
+
+  {/* SMART CHAT */}
+  <button
+    type="button"
+    className="top-chat-button"
+    onClick={() => navigate("/smart-chat")}
+    aria-label="Open Smart Chat"
+  >
+    <MessageCircle size={22} />
+    <span>Smart Chat</span>
+  </button>
+
+  {/* GENERAL EXPENSES */}
+  {premiumUnlocked && (
     <button
       type="button"
-      className="top-chat-button"
-      onClick={() => navigate("/smart-chat")}
-      aria-label="Open Smart Chat"
-      title="Smart Chat"
+      className="top-settings-button"
+      onClick={() => navigate("/general-expenses")}
+      aria-label="General Expenses"
+      title="General Expenses"
     >
-      <MessageCircle size={22} />
-      <span>Smart Chat</span>
+      <WalletCards size={22} />
     </button>
+  )}
 
-    {premiumUnlocked && (
-      <button
-        type="button"
-        className="top-settings-button"
-        onClick={() => navigate("/settings")}
-        aria-label="Settings"
-      >
-        <Settings size={22} />
-      </button>
-    )}
-  </div>
+  {/* SETTINGS - ALWAYS AVAILABLE */}
+  <button
+    type="button"
+    className="top-settings-button"
+    onClick={() => navigate("/settings")}
+    aria-label="Settings"
+    title="Settings"
+  >
+    <Settings size={22} />
+  </button>
+
+</div>
+
+
 </header>
 
 

@@ -46,7 +46,11 @@ function ExpenseCard({ expense, onEdit, onDelete }) {
       </div>
 
       <div className="expense-card-right">
-        <strong>₹{Number(expense.amount)}</strong>
+        <strong>
+  ₹{Number(
+    expense.displayAmount ?? expense.amount ?? 0
+  ).toFixed(2)}
+</strong>
 
         <div className="expense-actions">
           <button
